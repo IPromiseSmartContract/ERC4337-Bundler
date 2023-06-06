@@ -18,12 +18,7 @@ import {
     TestOpcodesAccount__factory,
     TestStorageAccount__factory,
 } from './types'
-import {
-    StakeInfo,
-    StorageMap,
-    UserOperation,
-    ValidationErrors,
-} from './modules/Types'
+import { StakeInfo, StorageMap, UserOperation, ValidationErrors } from './Types'
 
 const debug = Debug('aa.handler.opcodes')
 
