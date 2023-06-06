@@ -10,7 +10,7 @@ import { BigNumber } from 'ethers'
 import { UserOpInterface } from '../interfaces/userOpInterface'
 import { Entrypoint } from '../contracts'
 import { requireCond, RpcError, deepHexlify, tostr } from '../utils/utils'
-import { BundlerConfig } from '../modules//BundlerConfig'
+import { BundlerConfig } from '../modules/BundlerConfig'
 import { resolveProperties } from '@ethersproject/properties'
 import { ExecutionManager } from '../modules/ExecutionManager'
 const HEX_REGEX = /^0x[a-fA-F\d]*$/i
@@ -95,7 +95,7 @@ export class UserOpHandler implements UserOpInterface {
         await this.validateParameters(userOp1, entryPointInput)
 
         const userOp = await resolveProperties(userOp1)
-
+        /*
         console.log(
             `UserOperation: Sender=${userOp.sender}  Nonce=${tostr(
                 userOp.nonce
@@ -103,6 +103,7 @@ export class UserOpHandler implements UserOpInterface {
                 userOp.paymasterAndData
             )}`
         )
+        */
         await this.execManager.sendUserOperation(userOp, entryPointInput)
         return await this.entryPoint.getUserOpHash(userOp)
         throw new Error('Method not implemented.')
