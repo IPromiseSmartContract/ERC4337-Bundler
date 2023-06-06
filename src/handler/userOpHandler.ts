@@ -16,10 +16,17 @@ export class UserOpHandler implements UserOpInterface {
     ): Promise<boolean> {
         throw new Error('Method not implemented.')
     }
-    estimateUserOperationGas(
-        userOp: UserOperation,
+    async estimateUserOperationGas(
+        userOp1: UserOperation,
         entryPoint: string
     ): Promise<any> {
+        const userOp = {
+            paymasterAndData: '0x',
+            maxFeePerGas: 0,
+            maxPriorityFeePerGas: 0,
+            preverificationGas: 0,
+            verificationGasLimit: 10e6,
+        }
         throw new Error('Method not implemented.')
     }
     sendUserOperation(
