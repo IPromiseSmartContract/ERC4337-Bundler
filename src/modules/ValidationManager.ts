@@ -4,7 +4,7 @@ import { BigNumber, BigNumberish, BytesLike, ethers } from 'ethers'
 import { requireCond, RpcError } from '../utils/utils'
 import { AddressZero, decodeErrorReason } from '../modules/ERC4337Utils'
 import { calcPreVerificationGas } from '../modules/calcPreVerificationGas'
-import { parseScannerResult } from './parseScannerResult'
+//import { parseScannerResult } from './parseScannerResult'
 import { BaseProvider, JsonRpcProvider } from '@ethersproject/providers'
 import {
     BundlerCollectorReturn,
@@ -243,31 +243,32 @@ export class ValidationManager {
             hash: '',
         }
         let storageMap: StorageMap = {}
-        if (!this.unsafe) {
-            let tracerResult: BundlerCollectorReturn
-            ;[res, tracerResult] =
-                await this._geth_traceCall_SimulateValidation(userOp)
-            let contractAddresses: string[]
-            ;[contractAddresses, storageMap] = parseScannerResult(
-                userOp,
-                tracerResult,
-                res,
-                this.entryPoint
-            )
-            // if no previous contract hashes, then calculate hashes of contracts
-            if (previousCodeHashes == null) {
-                codeHashes = await this.getCodeHashes(contractAddresses)
-            }
-            if ((res as any) === '0x') {
-                throw new Error(
-                    'simulateValidation reverted with no revert string!'
-                )
-            }
-        } else {
-            // NOTE: this mode doesn't do any opcode checking and no stake checking!
-            res = await this._callSimulateValidation(userOp)
-        }
-
+        // TODO: we will use unsafe mode, so I write res = await this._callSimulateValidation(userOp) directly(So that I can delete parseScannerResult)
+        // if (!this.unsafe) {
+        //     let tracerResult: BundlerCollectorReturn
+        //     ;[res, tracerResult] =
+        //         await this._geth_traceCall_SimulateValidation(userOp)
+        //     let contractAddresses: string[]
+        //     ;[contractAddresses, storageMap] = parseScannerResult(
+        //         userOp,
+        //         tracerResult,
+        //         res,
+        //         this.entryPoint
+        //     )
+        //     // if no previous contract hashes, then calculate hashes of contracts
+        //     if (previousCodeHashes == null) {
+        //         codeHashes = await this.getCodeHashes(contractAddresses)
+        //     }
+        //     if ((res as any) === '0x') {
+        //         throw new Error(
+        //             'simulateValidation reverted with no revert string!'
+        //         )
+        //     }
+        // } else {
+        //     // NOTE: this mode doesn't do any opcode checking and no stake checking!
+        //     res = await this._callSimulateValidation(userOp)
+        // }
+        res = await this._callSimulateValidation(userOp)
         requireCond(
             !res.returnInfo.sigFailed,
             'Invalid UserOp signature or paymaster signature',
