@@ -6,10 +6,16 @@ This is the README file for the `bundler` package. It provides information about
 
 ## Development
 
-make sure you have [Node.js](https://nodejs.org) installed. Then, run the following command:
+make sure you have [Node.js](https://nodejs.org) installed. Then, install the dependencies
 
 ```bash
 yarn
+```
+
+Next, generate types for smart contract abi by:
+
+```bash
+yarn generate
 ```
 
 ## Usage
