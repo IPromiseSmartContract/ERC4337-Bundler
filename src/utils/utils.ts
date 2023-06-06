@@ -1,5 +1,6 @@
 import { hexlify, resolveProperties } from 'ethers/lib/utils'
-
+import { BigNumberish } from 'ethers/lib/ethers'
+import { BigNumber } from 'ethers'
 export function deepHexlify(obj: any): any {
     if (typeof obj === 'function') {
         return undefined
@@ -47,4 +48,21 @@ export function requireCond(
     if (!cond) {
         throw new RpcError(msg, code, data)
     }
+}
+export function mapOf<T>(
+    keys: Iterable<string>,
+    mapper: (key: string) => T,
+    filter?: (key: string) => boolean
+): { [key: string]: T } {
+    const ret: { [key: string]: T } = {}
+    for (const key of keys) {
+        if (filter == null || filter(key)) {
+            ret[key] = mapper(key)
+        }
+    }
+    return ret
+}
+
+export function tostr(s: BigNumberish): string {
+    return BigNumber.from(s).toString()
 }
