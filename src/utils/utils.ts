@@ -5,7 +5,7 @@ import {
     keccak256,
     defaultAbiCoder,
 } from 'ethers/lib/utils'
-import { BigNumberish } from 'ethers/lib/ethers'
+import { BigNumberish, BytesLike } from 'ethers/lib/ethers'
 import { BigNumber } from 'ethers'
 import { UserOperation } from '../modules/Types'
 import { GasOverheads } from '../model/gas'
@@ -171,4 +171,19 @@ export function calcPreVerificationGas(
             ov.perUserOpWord * lengthInWord
     )
     return ret
+}
+export type NotPromise<T> = {
+    [P in keyof T]: Exclude<T[P], Promise<any>>
+}
+
+// extract address from initCode or paymasterAndData
+export function getAddr(data?: BytesLike): string | undefined {
+    if (data == null) {
+        return undefined
+    }
+    const str = hexlify(data)
+    if (str.length >= 42) {
+        return str.slice(0, 42)
+    }
+    return undefined
 }

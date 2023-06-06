@@ -1,6 +1,6 @@
 import { BigNumberish } from 'ethers'
-import { NotPromise } from '@account-abstraction/utils'
-import { UserOperationStruct } from '@account-abstraction/contracts'
+import { NotPromise } from '../utils/utils'
+import { UserOperationStruct } from '../contracts/Entrypoint'
 
 export enum ValidationErrors {
     InvalidFields = -32602,

@@ -4,8 +4,8 @@ import { BigNumber, BigNumberish, BytesLike, ethers } from 'ethers'
 import { requireCond, RpcError } from '../utils/utils'
 import { AddressZero, decodeErrorReason } from '../modules/ERC4337Utils'
 import { calcPreVerificationGas } from '../modules/calcPreVerificationGas'
-import { parseScannerResult } from './parseScannerResult'
-import { JsonRpcProvider } from '@ethersproject/providers'
+//import { parseScannerResult } from './parseScannerResult'
+import { BaseProvider, JsonRpcProvider } from '@ethersproject/providers'
 import {
     BundlerCollectorReturn,
     bundlerCollectorTracer,
@@ -13,7 +13,7 @@ import {
 } from './BundlerCollectorTracer'
 import { debug_traceCall } from './GethTracer'
 import Debug from 'debug'
-import { GetCodeHashes__factory } from '../types'
+//import { GetCodeHashes__factory } from '../types'
 import {
     ReferencedCodeHashes,
     StakeInfo,
@@ -22,9 +22,8 @@ import {
     ValidationErrors,
 } from './Types'
 import { getAddr, runContractScript } from './moduleUtils'
-
+import { keccak256 } from 'js-sha3'
 const debug = Debug('aa.mgr.validate')
-
 /**
  * result from successful simulateValidation
  */
@@ -244,31 +243,32 @@ export class ValidationManager {
             hash: '',
         }
         let storageMap: StorageMap = {}
-        if (!this.unsafe) {
-            let tracerResult: BundlerCollectorReturn
-            ;[res, tracerResult] =
-                await this._geth_traceCall_SimulateValidation(userOp)
-            let contractAddresses: string[]
-            ;[contractAddresses, storageMap] = parseScannerResult(
-                userOp,
-                tracerResult,
-                res,
-                this.entryPoint
-            )
-            // if no previous contract hashes, then calculate hashes of contracts
-            if (previousCodeHashes == null) {
-                codeHashes = await this.getCodeHashes(contractAddresses)
-            }
-            if ((res as any) === '0x') {
-                throw new Error(
-                    'simulateValidation reverted with no revert string!'
-                )
-            }
-        } else {
-            // NOTE: this mode doesn't do any opcode checking and no stake checking!
-            res = await this._callSimulateValidation(userOp)
-        }
-
+        // TODO: we will use unsafe mode, so I write res = await this._callSimulateValidation(userOp) directly(So that I can delete parseScannerResult)
+        // if (!this.unsafe) {
+        //     let tracerResult: BundlerCollectorReturn
+        //     ;[res, tracerResult] =
+        //         await this._geth_traceCall_SimulateValidation(userOp)
+        //     let contractAddresses: string[]
+        //     ;[contractAddresses, storageMap] = parseScannerResult(
+        //         userOp,
+        //         tracerResult,
+        //         res,
+        //         this.entryPoint
+        //     )
+        //     // if no previous contract hashes, then calculate hashes of contracts
+        //     if (previousCodeHashes == null) {
+        //         codeHashes = await this.getCodeHashes(contractAddresses)
+        //     }
+        //     if ((res as any) === '0x') {
+        //         throw new Error(
+        //             'simulateValidation reverted with no revert string!'
+        //         )
+        //     }
+        // } else {
+        //     // NOTE: this mode doesn't do any opcode checking and no stake checking!
+        //     res = await this._callSimulateValidation(userOp)
+        // }
+        res = await this._callSimulateValidation(userOp)
         requireCond(
             !res.returnInfo.sigFailed,
             'Invalid UserOp signature or paymaster signature',
@@ -300,11 +300,14 @@ export class ValidationManager {
     }
 
     async getCodeHashes(addresses: string[]): Promise<ReferencedCodeHashes> {
-        const { hash } = await runContractScript(
-            this.entryPoint.provider,
-            new GetCodeHashes__factory(),
-            [addresses]
-        )
+        const hashes: string[] = []
+        const provider = this.entryPoint.provider as JsonRpcProvider
+        for (let i = 0; i < addresses.length; i++) {
+            const contractCode = await provider.getCode(addresses[i])
+            hashes[i] = contractCode
+        }
+        const data: string = hashes.join('')
+        const hash: string = keccak256(data)
 
         return {
             hash,

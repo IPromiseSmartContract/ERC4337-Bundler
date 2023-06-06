@@ -1,4 +1,4 @@
-import { EntryPoint } from '@account-abstraction/contracts'
+import { Entrypoint } from '../contracts/Entrypoint'
 import { MempoolManager } from './MempoolManager'
 import { ValidateUserOpResult, ValidationManager } from './ValidationManager'
 import { BigNumber, BigNumberish } from 'ethers'
@@ -6,7 +6,7 @@ import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers'
 import Debug from 'debug'
 import { ReputationManager, ReputationStatus } from './ReputationManager'
 import { Mutex } from 'async-mutex'
-import { GetUserOpHashes__factory } from '../types'
+//import { GetUserOpHashes__factory } from '../types'
 import { StorageMap, UserOperation } from './Types'
 import { getAddr, mergeStorageMap, runContractScript } from './moduleUtils'
 import { EventsManager } from './EventsManager'
@@ -25,7 +25,7 @@ export class BundleManager {
     mutex = new Mutex()
 
     constructor(
-        readonly entryPoint: EntryPoint,
+        readonly entryPoint: Entrypoint,
         readonly eventsManager: EventsManager,
         readonly mempoolManager: MempoolManager,
         readonly validationManager: ValidationManager,
@@ -324,12 +324,18 @@ export class BundleManager {
 
     // helper function to get hashes of all UserOps
     async getUserOpHashes(userOps: UserOperation[]): Promise<string[]> {
-        const { userOpHashes } = await runContractScript(
-            this.entryPoint.provider,
-            new GetUserOpHashes__factory(),
-            [this.entryPoint.address, userOps]
-        )
+        const ret: string[] = []
+        for (let i = 0; i < userOps.length; i++) {
+            const hash = await this.entryPoint.getUserOpHash(userOps[i])
+            ret.push(hash)
+        }
+        return ret
+        // const { userOpHashes } = await runContractScript(
+        //     this.entryPoint.provider,
+        //     new GetUserOpHashes__factory(),
+        //     [this.entryPoint.address, userOps]
+        // )
 
-        return userOpHashes
+        // return userOpHashes
     }
 }

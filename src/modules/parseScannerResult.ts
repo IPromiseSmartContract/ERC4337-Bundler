@@ -1,9 +1,9 @@
+import { SenderCreator__factory } from '@account-abstraction/contracts'
 import {
-    EntryPoint,
-    IEntryPoint__factory,
-    IPaymaster__factory,
-    SenderCreator__factory,
-} from '@account-abstraction/contracts'
+    Entrypoint,
+    Paymaster__factory,
+    Entrypoint__factory,
+} from '../contracts'
 import { hexZeroPad, Interface, keccak256 } from 'ethers/lib/utils'
 import { BundlerCollectorReturn } from './BundlerCollectorTracer'
 import { mapOf, requireCond } from '../utils/utils'
@@ -18,12 +18,7 @@ import {
     TestOpcodesAccount__factory,
     TestStorageAccount__factory,
 } from './types'
-import {
-    StakeInfo,
-    StorageMap,
-    UserOperation,
-    ValidationErrors,
-} from './modules/Types'
+import { StakeInfo, StorageMap, UserOperation, ValidationErrors } from './Types'
 
 const debug = Debug('aa.handler.opcodes')
 
@@ -51,8 +46,8 @@ function parseCallStack(tracerResults: BundlerCollectorReturn): CallEntry[] {
             ...TestOpcodesAccountFactory__factory.abi,
             ...TestStorageAccount__factory.abi,
             ...SenderCreator__factory.abi,
-            ...IEntryPoint__factory.abi,
-            ...IPaymaster__factory.abi,
+            ...Entrypoint__factory.abi,
+            ...Paymaster__factory.abi,
         ].reduce((set, entry) => {
             const key = `${entry.name}(${entry.inputs
                 .map((i) => i.type)
@@ -192,7 +187,7 @@ export function parseScannerResult(
     userOp: UserOperation,
     tracerResults: BundlerCollectorReturn,
     validationResult: ValidationResult,
-    entryPoint: EntryPoint
+    entryPoint: Entrypoint
 ): [string[], StorageMap] {
     debug('=== simulation result:', inspect(tracerResults, true, 10, true))
     // todo: block access to no-code addresses (might need update to tracer)
