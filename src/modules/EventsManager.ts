@@ -1,12 +1,12 @@
 import {
     AccountDeployedEvent,
     UserOperationEventEvent,
-} from '@account-abstraction/contracts/dist/types/EntryPoint'
+} from '../contracts/Entrypoint'
 import { ReputationManager } from './ReputationManager'
-import { EntryPoint } from '@account-abstraction/contracts'
+import { Entrypoint } from '../contracts'
 import Debug from 'debug'
-import { SignatureAggregatorChangedEvent } from '@account-abstraction/contracts/types/EntryPoint'
-import { TypedEvent } from '@account-abstraction/contracts/dist/types/common'
+import { SignatureAggregatorChangedEvent } from '../contracts/Entrypoint'
+import { TypedEvent } from '../contracts/common'
 import { MempoolManager } from './MempoolManager'
 
 const debug = Debug('aa.events')
@@ -18,7 +18,7 @@ export class EventsManager {
     lastBlock?: number
 
     constructor(
-        readonly entryPoint: EntryPoint,
+        readonly entryPoint: Entrypoint,
         readonly mempoolManager: MempoolManager,
         readonly reputationManager: ReputationManager
     ) {}
