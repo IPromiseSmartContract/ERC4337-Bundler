@@ -9,12 +9,25 @@ import {
 import { BigNumber } from 'ethers'
 import { UserOpInterface } from '../interfaces/userOpInterface'
 import { Entrypoint } from '../contracts'
-import { requireCond, RpcError, deepHexlify } from '../utils/utils'
+import {
+    requireCond,
+    RpcError,
+    deepHexlify,
+    calcPreVerificationGas,
+} from '../utils/utils'
+import { resolveProperties } from '@ethersproject/properties'
+import { BaseProvider } from '@ethersproject/providers'
 
 const HEX_REGEX = /^0x[a-fA-F\d]*$/i
 
 export class UserOpHandler implements UserOpInterface {
-    constructor(readonly entryPoint: Entrypoint) {}
+    constructor(
+        readonly entryPoint: Entrypoint,
+        readonly provider: BaseProvider
+    ) {
+        this.entryPoint = entryPoint
+        this.provider = provider
+    }
     validateParameters(
         userOp: UserOperationStruct,
         entryPointInput: string,
@@ -24,17 +37,56 @@ export class UserOpHandler implements UserOpInterface {
         throw new Error('Method not implemented.')
     }
     async estimateUserOperationGas(
-        userOp1: UserOperationStruct,
-        entryPoint: string
+        userOpInput: UserOperationStruct,
+        entryPointInput: string
     ): Promise<any> {
         const userOp = {
+            ...(await resolveProperties(userOpInput)),
             paymasterAndData: '0x',
             maxFeePerGas: 0,
             maxPriorityFeePerGas: 0,
             preverificationGas: 0,
             verificationGasLimit: 10e6,
         }
-        throw new Error('Method not implemented.')
+        const errorResult = await this.entryPoint.callStatic
+            .simulateValidation(userOp)
+            .catch((e) => e)
+        if (errorResult.errorName === 'FailedOp') {
+            throw new RpcError('Failed to simulate user operation')
+        }
+        const { returnInfo } = errorResult.errorArgs
+        let { preOpGas, validAfter, validUntil } = returnInfo
+        // TODO: should validate parameters
+        const callGasLimit = await this.provider
+            .estimateGas({
+                from: this.entryPoint.address,
+                to: userOp.sender,
+                data: userOp.callData,
+            })
+            .then((v) => v.toNumber())
+            .catch((err) => {
+                const message =
+                    err.message.match(/reason="(.*?)"/)?.at(1) ??
+                    'execution reverted'
+                throw new RpcError(message)
+            })
+        validAfter = BigNumber.from(validAfter)
+        validUntil = BigNumber.from(validUntil)
+        if (validUntil === BigNumber.from(0)) {
+            validUntil = undefined
+        }
+        if (validAfter === BigNumber.from(0)) {
+            validAfter = undefined
+        }
+        const preVerificationGas = calcPreVerificationGas(userOp)
+        const verificationGas = BigNumber.from(preOpGas).toNumber()
+        return {
+            preVerificationGas,
+            verificationGas,
+            validAfter,
+            validUntil,
+            callGasLimit,
+        }
     }
     sendUserOperation(
         userOp1: UserOperationStruct,

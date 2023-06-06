@@ -13,7 +13,24 @@ export interface UserOperation {
     paymasterAndData: string
     signature: string
 }
-export interface EstimateUserOpGasResult {}
+export interface EstimateUserOpGasResult {
+    /**
+     * the preVerification gas used by this UserOperation.
+     */
+    preVerificationGas: BigNumberish
+    /**
+     * gas used for validation of this UserOperation, including account creation
+     */
+    verificationGas: BigNumberish
+    /**
+     * the deadline after which this UserOperation is invalid (not a gas estimation parameter, but returned by validation
+     */
+    deadline?: BigNumberish
+    /**
+     * estimated cost of calling the account with the given callData
+     */
+    callGasLimit: BigNumberish
+}
 export interface UserOperationEventEvent {}
 export interface UserOperationByHashResponse {
     userOperation: UserOperation
