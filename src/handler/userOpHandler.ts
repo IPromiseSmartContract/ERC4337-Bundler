@@ -10,7 +10,7 @@ import { BigNumber } from 'ethers'
 import { UserOpInterface } from '../interfaces/userOpInterface'
 import { Entrypoint } from '../contracts'
 import { requireCond, RpcError, deepHexlify, tostr } from '../utils/utils'
-import { BundlerConfig } from '../modules/BundlerConfig'
+//import { BundlerConfig } from '../modules/BundlerConfig'
 import { resolveProperties } from '@ethersproject/properties'
 import { ExecutionManager } from '../modules/ExecutionManager'
 const HEX_REGEX = /^0x[a-fA-F\d]*$/i
@@ -18,9 +18,9 @@ const HEX_REGEX = /^0x[a-fA-F\d]*$/i
 export class UserOpHandler implements UserOpInterface {
     constructor(
         readonly execManager: ExecutionManager,
-        readonly entryPoint: Entrypoint,
-        readonly config: BundlerConfig
-    ) {}
+        readonly entryPoint: Entrypoint
+    ) //readonly config: BundlerConfig
+    {}
     async validateParameters(
         userOp1: UserOperationStruct,
         entryPointInput: string,
@@ -29,14 +29,14 @@ export class UserOpHandler implements UserOpInterface {
     ): Promise<boolean> {
         requireCond(entryPointInput != null, 'No entryPoint param', -32602)
 
-        if (
-            entryPointInput?.toString().toLowerCase() !==
-            this.config.entryPoint.toLowerCase()
-        ) {
-            throw new Error(
-                `The EntryPoint at "${entryPointInput}" is not supported. This bundler uses ${this.config.entryPoint}`
-            )
-        }
+        // if (
+        //     entryPointInput?.toString().toLowerCase() !==
+        //     this.config.entryPoint.toLowerCase()
+        // ) {
+        //     throw new Error(
+        //         `The EntryPoint at "${entryPointInput}" is not supported. This bundler uses ${this.config.entryPoint}`
+        //     )
+        // }
         // minimal sanity check: userOp exists, and all members are hex
         requireCond(userOp1 != null, 'No UserOperation param')
         const userOp = (await resolveProperties(userOp1)) as any
