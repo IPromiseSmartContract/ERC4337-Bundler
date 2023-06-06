@@ -1,6 +1,7 @@
 import { hexlify, resolveProperties } from 'ethers/lib/utils'
 import { BigNumberish } from 'ethers/lib/ethers'
 import { BigNumber } from 'ethers'
+import { BytesLike } from 'ethers'
 export function deepHexlify(obj: any): any {
     if (typeof obj === 'function') {
         return undefined
@@ -69,4 +70,16 @@ export function tostr(s: BigNumberish): string {
 
 export type NotPromise<T> = {
     [P in keyof T]: Exclude<T[P], Promise<any>>
+}
+
+// extract address from initCode or paymasterAndData
+export function getAddr(data?: BytesLike): string | undefined {
+    if (data == null) {
+        return undefined
+    }
+    const str = hexlify(data)
+    if (str.length >= 42) {
+        return str.slice(0, 42)
+    }
+    return undefined
 }
