@@ -11,6 +11,7 @@
         "generate": "typechain --target ethers-v5 --out-dir ./src/contracts --glob ./src/contracts/abi/*.json"
     },
     "dependencies": {
+        "@account-abstraction/utils": "^0.6.0",
         "@ethersproject/providers": "^5.7.2",
         "body-parser": "^1.20.2",
         "cors": "^2.8.5",
