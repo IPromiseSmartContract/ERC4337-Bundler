@@ -13,6 +13,7 @@
     "dependencies": {
         "@account-abstraction/utils": "^0.6.0",
         "@ethersproject/providers": "^5.7.2",
+        "async-mutex": "^0.4.0",
         "body-parser": "^1.20.2",
         "cors": "^2.8.5",
         "debug": "^4.3.4",

@@ -66,3 +66,7 @@ export function mapOf<T>(
 export function tostr(s: BigNumberish): string {
     return BigNumber.from(s).toString()
 }
+
+export type NotPromise<T> = {
+    [P in keyof T]: Exclude<T[P], Promise<any>>
+}

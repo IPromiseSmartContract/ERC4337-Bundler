@@ -1,5 +1,5 @@
-import { UserOperationStruct } from '@account-abstraction/contracts'
-import { NotPromise } from '@account-abstraction/utils'
+import { UserOperationStruct } from '../contracts/Entrypoint'
+import { NotPromise } from '../utils/utils'
 export interface GasOverheads {
     /**
      * fixed overhead for entire handleOp bundle.

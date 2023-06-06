@@ -1,4 +1,4 @@
-import { UserOperationStruct } from '@account-abstraction/contracts'
+import { UserOperationStruct } from '../contracts/Entrypoint'
 export declare const AddressZero = '0x0000000000000000000000000000000000000000'
 export type NotPromise<T> = {
     [P in keyof T]: Exclude<T[P], Promise<any>>

@@ -1,4 +1,4 @@
-import { EntryPoint } from '@account-abstraction/contracts'
+import { Entrypoint } from '../contracts/Entrypoint'
 import { MempoolManager } from './MempoolManager'
 import { ValidateUserOpResult, ValidationManager } from './ValidationManager'
 import { BigNumber, BigNumberish } from 'ethers'
@@ -25,7 +25,7 @@ export class BundleManager {
     mutex = new Mutex()
 
     constructor(
-        readonly entryPoint: EntryPoint,
+        readonly entryPoint: Entrypoint,
         readonly eventsManager: EventsManager,
         readonly mempoolManager: MempoolManager,
         readonly validationManager: ValidationManager,
