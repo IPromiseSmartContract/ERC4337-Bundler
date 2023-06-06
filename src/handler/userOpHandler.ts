@@ -6,6 +6,7 @@ import {
     UserOperationStruct,
     UserOperationEventEvent,
 } from '../contracts/Entrypoint'
+import { Log } from '@ethersproject/providers'
 import { BigNumber } from 'ethers'
 import { UserOpInterface } from '../interfaces/userOpInterface'
 import { Entrypoint } from '../contracts'
@@ -18,9 +19,8 @@ const HEX_REGEX = /^0x[a-fA-F\d]*$/i
 export class UserOpHandler implements UserOpInterface {
     constructor(
         readonly execManager: ExecutionManager,
-        readonly entryPoint: Entrypoint
-    ) //readonly config: BundlerConfig
-    {}
+        readonly entryPoint: Entrypoint //readonly config: BundlerConfig
+    ) {}
     async validateParameters(
         userOp1: UserOperationStruct,
         entryPointInput: string,
@@ -184,7 +184,62 @@ export class UserOpHandler implements UserOpInterface {
         })
         throw new Error('Method not implemented.')
     }
-    getUserOperationReceipt(userOpHash: string): Promise<UserOperationReceipt> {
+
+    _filterLogs(userOpEvent: UserOperationEventEvent, logs: Log[]): Log[] {
+        let startIndex = -1
+        let endIndex = -1
+        const events = Object.values(this.entryPoint.interface.events)
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const beforeExecutionTopic = this.entryPoint.interface.getEventTopic(
+            events.find((e) => e.name === 'BeforeExecution')!
+        )
+        logs.forEach((log, index) => {
+            if (log?.topics[0] === beforeExecutionTopic) {
+                // all UserOp execution events start after the "BeforeExecution" event.
+                startIndex = endIndex = index
+            } else if (log?.topics[0] === userOpEvent.topics[0]) {
+                // process UserOperationEvent
+                if (log.topics[1] === userOpEvent.topics[1]) {
+                    // it's our userOpHash. save as end of logs array
+                    endIndex = index
+                } else {
+                    // it's a different hash. remember it as beginning index, but only if we didn't find our end index yet.
+                    if (endIndex === -1) {
+                        startIndex = index
+                    }
+                }
+            }
+        })
+        if (endIndex === -1) {
+            throw new Error('fatal: no UserOperationEvent in logs')
+        }
+        return logs.slice(startIndex + 1, endIndex)
+    }
+
+    async getUserOperationReceipt(
+        userOpHash: string
+    ): Promise<UserOperationReceipt> {
+        requireCond(
+            userOpHash?.toString()?.match(HEX_REGEX) != null,
+            'Missing/invalid userOpHash',
+            -32601
+        )
+        const event = await this.getOperationEvent(userOpHash)
+        if (event == null) {
+            return null
+        }
+        const receipt = await event.getTransactionReceipt()
+        const logs = this._filterLogs(event, receipt.logs)
+        return deepHexlify({
+            userOpHash,
+            sender: event.args.sender,
+            nonce: event.args.nonce,
+            actualGasCost: event.args.actualGasCost,
+            actualGasUsed: event.args.actualGasUsed,
+            success: event.args.success,
+            logs,
+            receipt,
+        })
         throw new Error('Method not implemented.')
     }
 }
