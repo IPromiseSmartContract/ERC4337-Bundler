@@ -1,21 +1,21 @@
 import {
     UserOperationByHashResponse,
-    UserOperationReceipt,
+    UserOperationReceipt
 } from '../model/userOperation'
 import {
     UserOperationStruct,
-    UserOperationEventEvent,
+    UserOperationEventEvent
 } from '../contracts/Entrypoint'
 import { Log } from '@ethersproject/providers'
 import { BigNumber } from 'ethers'
-import { UserOpInterface } from '../interfaces/userOpInterface'
+import { IUserOpInterface } from '../interfaces/handler/userOpInterface'
 import { Entrypoint } from '../contracts'
 import {
     requireCond,
     RpcError,
     deepHexlify,
     calcPreVerificationGas,
-    tostr,
+    tostr
 } from '../utils/utils'
 import { resolveProperties } from '@ethersproject/properties'
 import { BaseProvider } from '@ethersproject/providers'
@@ -23,7 +23,7 @@ import { BaseProvider } from '@ethersproject/providers'
 import { ExecutionManager } from '../modules/ExecutionManager'
 const HEX_REGEX = /^0x[a-fA-F\d]*$/i
 
-export class UserOpHandler implements UserOpInterface {
+export class UserOpHandler implements IUserOpInterface {
     constructor(
         readonly entryPoint: Entrypoint,
         readonly provider: BaseProvider,
@@ -59,7 +59,7 @@ export class UserOpHandler implements UserOpInterface {
             'nonce',
             'initCode',
             'callData',
-            'paymasterAndData',
+            'paymasterAndData'
         ]
         if (requireSignature) {
             fields.push('signature')
@@ -98,7 +98,7 @@ export class UserOpHandler implements UserOpInterface {
             maxFeePerGas: 0,
             maxPriorityFeePerGas: 0,
             preverificationGas: 0,
-            verificationGasLimit: 10e6,
+            verificationGasLimit: 10e6
         }
         const errorResult = await this.entryPoint.callStatic
             .simulateValidation(userOp)
@@ -113,7 +113,7 @@ export class UserOpHandler implements UserOpInterface {
             .estimateGas({
                 from: this.entryPoint.address,
                 to: userOp.sender,
-                data: userOp.callData,
+                data: userOp.callData
             })
             .then((v) => v.toNumber())
             .catch((err) => {
@@ -137,7 +137,7 @@ export class UserOpHandler implements UserOpInterface {
             verificationGas,
             validAfter,
             validUntil,
-            callGasLimit,
+            callGasLimit
         }
     }
     async sendUserOperation(
@@ -212,7 +212,7 @@ export class UserOpHandler implements UserOpInterface {
             maxFeePerGas,
             maxPriorityFeePerGas,
             paymasterAndData,
-            signature,
+            signature
         } = op
 
         return deepHexlify({
@@ -227,14 +227,13 @@ export class UserOpHandler implements UserOpInterface {
                 maxFeePerGas,
                 maxPriorityFeePerGas,
                 paymasterAndData,
-                signature,
+                signature
             },
             entryPoint: this.entryPoint.address,
             transactionHash: tx.hash,
             blockHash: tx.blockHash ?? '',
-            blockNumber: tx.blockNumber ?? 0,
+            blockNumber: tx.blockNumber ?? 0
         })
-        throw new Error('Method not implemented.')
     }
 
     _filterLogs(userOpEvent: UserOperationEventEvent, logs: Log[]): Log[] {
@@ -290,7 +289,7 @@ export class UserOpHandler implements UserOpInterface {
             actualGasUsed: event.args.actualGasUsed,
             success: event.args.success,
             logs,
-            receipt,
+            receipt
         })
         throw new Error('Method not implemented.')
     }

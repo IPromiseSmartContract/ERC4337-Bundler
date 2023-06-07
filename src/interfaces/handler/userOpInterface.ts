@@ -2,9 +2,9 @@ import {
     UserOperation,
     UserOperationEventEvent,
     UserOperationByHashResponse,
-    UserOperationReceipt,
-} from '../model/userOperation'
-export interface UserOpInterface {
+    UserOperationReceipt
+} from '../../model/userOperation'
+export interface IUserOpInterface {
     validateParameters(
         userOp: UserOperation,
         entryPointInput: string,
@@ -13,7 +13,7 @@ export interface UserOpInterface {
     ): Promise<boolean>
     estimateUserOperationGas(
         userOp: UserOperation,
-        entryPoint: string
+        entryPointInput: string
     ): Promise<any>
     sendUserOperation(
         userOp1: UserOperation,

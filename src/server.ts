@@ -2,15 +2,18 @@ import bodyParser from 'body-parser'
 import cors from 'cors'
 import express, { Express, Response, Request } from 'express'
 import Debug from 'debug'
-import { Server } from 'http'
+import { IUserOpInterface } from './interfaces/handler/userOpInterface'
+import { UserOpHandler } from './handler/userOpHandler'
 
 const debug = Debug('aa.bundler.server')
 
 export class BundlerServer {
     app: Express
-    private readonly httpServer: Server
+    private readonly handler: IUserOpInterface
 
-    constructor() {
+    constructor(handler: UserOpHandler) {
+        this.handler = handler
+
         this.app = express()
         this.app.use(cors())
         this.app.use(bodyParser.json())
@@ -39,15 +42,22 @@ export class BundlerServer {
                 break
             case 'eth_sendUserOperation':
                 // Call Send user operation in userOpInterface
+                await this.handler.sendUserOperation(params[0], params[1])
                 break
             case 'eth_estimateUserOperationGas':
+                await this.handler.estimateUserOperationGas(
+                    params[0],
+                    params[1]
+                )
                 // Call Estimate user operation gas in userOpInterface
                 break
             case 'eth_getUserOperationReceipt':
+                await this.handler.getUserOperationReceipt(params[0])
                 // Call Get user operation receipt in userOpInterface
                 break
             case 'eth_getUserOperationByHash':
                 // Call Get user operation by hash in userOpInterface
+                await this.handler.getUserOperationByHash(params[0])
                 break
             case 'web3_clientVersion':
                 break
