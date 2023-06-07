@@ -1,15 +1,33 @@
-import {
-    hexlify,
-    arrayify,
-    resolveProperties,
-    keccak256,
-    defaultAbiCoder,
-} from 'ethers/lib/utils'
+import { hexlify, arrayify, resolveProperties, keccak256, defaultAbiCoder } from 'ethers/lib/utils'
 import { BigNumberish, BytesLike } from 'ethers/lib/ethers'
 import { BigNumber } from 'ethers'
 import { UserOperation } from '../modules/Types'
 import { GasOverheads } from '../model/gas'
 import { UserOperationStruct } from '../contracts/Entrypoint'
+
+interface DecodedError {
+    message: string
+    opIndex?: number
+}
+const ErrorSig = keccak256(Buffer.from('Error(string)')).slice(0, 10) // 0x08c379a0
+const FailedOpSig = keccak256(Buffer.from('FailedOp(uint256,string)')).slice(0, 10) // 0x220266b6
+
+/**
+ * decode bytes thrown by revert as Error(message) or FailedOp(opIndex,paymaster,message)
+ */
+export function decodeErrorReason(error: string): DecodedError | undefined {
+    if (error.startsWith(ErrorSig)) {
+        const [message] = defaultAbiCoder.decode(['string'], '0x' + error.substring(10))
+        return { message }
+    } else if (error.startsWith(FailedOpSig)) {
+        let [opIndex, message] = defaultAbiCoder.decode(['uint256', 'string'], '0x' + error.substring(10))
+        message = `FailedOp: ${message as string}`
+        return {
+            message,
+            opIndex
+        }
+    }
+}
 
 export function deepHexlify(obj: any): any {
     if (typeof obj === 'function') {
@@ -26,7 +44,7 @@ export function deepHexlify(obj: any): any {
     return Object.keys(obj).reduce(
         (set, key) => ({
             ...set,
-            [key]: deepHexlify(obj[key]),
+            [key]: deepHexlify(obj[key])
         }),
         {}
     )
@@ -40,21 +58,12 @@ export async function resolveHexlify(a: any): Promise<any> {
 
 export class RpcError extends Error {
     // error codes from: https://eips.ethereum.org/EIPS/eip-1474
-    constructor(
-        msg: string,
-        readonly code?: number,
-        readonly data: any = undefined
-    ) {
+    constructor(msg: string, readonly code?: number, readonly data: any = undefined) {
         super(msg)
     }
 }
 
-export function requireCond(
-    cond: boolean,
-    msg: string,
-    code?: number,
-    data: any = undefined
-): void {
+export function requireCond(cond: boolean, msg: string, code?: number, data: any = undefined): void {
     if (!cond) {
         throw new RpcError(msg, code, data)
     }
@@ -84,7 +93,7 @@ export const DefaultGasOverheads: GasOverheads = {
     zeroByte: 4,
     nonZeroByte: 16,
     bundleSize: 1,
-    sigSize: 65,
+    sigSize: 65
 }
 
 export function packUserOp(op: UserOperation): string {
@@ -99,7 +108,7 @@ export function packUserOp(op: UserOperation): string {
             'uint256',
             'uint256',
             'uint256',
-            'bytes32',
+            'bytes32'
         ],
         [
             op.sender,
@@ -111,7 +120,7 @@ export function packUserOp(op: UserOperation): string {
             op.preVerificationGas,
             op.maxFeePerGas,
             op.maxPriorityFeePerGas,
-            keccak256(op.paymasterAndData),
+            keccak256(op.paymasterAndData)
         ]
     )
 }
@@ -129,7 +138,7 @@ export function packUserOpWithoutSignature(op: UserOperation): string {
             'uint256',
             'uint256',
             'bytes',
-            'bytes',
+            'bytes'
         ],
         [
             op.sender,
@@ -142,7 +151,7 @@ export function packUserOpWithoutSignature(op: UserOperation): string {
             op.maxFeePerGas,
             op.maxPriorityFeePerGas,
             op.paymasterAndData,
-            op.signature,
+            op.signature
         ]
     )
 }
@@ -156,7 +165,7 @@ export function calcPreVerificationGas(
         // dummy values, in case the UserOp is incomplete.
         preVerificationGas: 21000, // dummy value, just for calldata cost
         signature: hexlify(Buffer.alloc(ov.sigSize, 1)), // dummy signature
-        ...userOp,
+        ...userOp
     } as any
 
     const packed = arrayify(packUserOp(p))
@@ -165,10 +174,7 @@ export function calcPreVerificationGas(
         .map((x) => (x === 0 ? ov.zeroByte : ov.nonZeroByte))
         .reduce((sum, x) => sum + x)
     const ret = Math.round(
-        callDataCost +
-            ov.fixed / ov.bundleSize +
-            ov.perUserOp +
-            ov.perUserOpWord * lengthInWord
+        callDataCost + ov.fixed / ov.bundleSize + ov.perUserOp + ov.perUserOpWord * lengthInWord
     )
     return ret
 }

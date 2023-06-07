@@ -1,26 +1,14 @@
-import {
-    UserOperationByHashResponse,
-    UserOperationReceipt
-} from '../model/userOperation'
-import {
-    UserOperationStruct,
-    UserOperationEventEvent
-} from '../contracts/Entrypoint'
+import { UserOperationByHashResponse, UserOperationReceipt } from '../model/userOperation'
+import { UserOperationStruct, UserOperationEventEvent } from '../contracts/Entrypoint'
 import { Log } from '@ethersproject/providers'
 import { BigNumber } from 'ethers'
 import { IUserOpInterface } from '../interfaces/handler/userOpInterface'
 import { Entrypoint } from '../contracts'
-import {
-    requireCond,
-    RpcError,
-    deepHexlify,
-    calcPreVerificationGas,
-    tostr
-} from '../utils/utils'
+import { requireCond, RpcError, deepHexlify, calcPreVerificationGas, tostr } from '../utils/utils'
 import { resolveProperties } from '@ethersproject/properties'
 import { BaseProvider } from '@ethersproject/providers'
-
 import { ExecutionManager } from '../modules/ExecutionManager'
+
 const HEX_REGEX = /^0x[a-fA-F\d]*$/i
 
 export class UserOpHandler implements IUserOpInterface {
@@ -54,13 +42,7 @@ export class UserOpHandler implements IUserOpInterface {
         requireCond(userOp1 != null, 'No UserOperation param')
         const userOp = (await resolveProperties(userOp1)) as any
 
-        const fields = [
-            'sender',
-            'nonce',
-            'initCode',
-            'callData',
-            'paymasterAndData'
-        ]
+        const fields = ['sender', 'nonce', 'initCode', 'callData', 'paymasterAndData']
         if (requireSignature) {
             fields.push('signature')
         }
@@ -100,9 +82,7 @@ export class UserOpHandler implements IUserOpInterface {
             preverificationGas: 0,
             verificationGasLimit: 10e6
         }
-        const errorResult = await this.entryPoint.callStatic
-            .simulateValidation(userOp)
-            .catch((e) => e)
+        const errorResult = await this.entryPoint.callStatic.simulateValidation(userOp).catch((e) => e)
         if (errorResult.errorName === 'FailedOp') {
             throw new RpcError('Failed to simulate user operation')
         }
@@ -117,9 +97,7 @@ export class UserOpHandler implements IUserOpInterface {
             })
             .then((v) => v.toNumber())
             .catch((err) => {
-                const message =
-                    err.message.match(/reason="(.*?)"/)?.at(1) ??
-                    'execution reverted'
+                const message = err.message.match(/reason="(.*?)"/)?.at(1) ?? 'execution reverted'
                 throw new RpcError(message)
             })
         validAfter = BigNumber.from(validAfter)
@@ -140,45 +118,23 @@ export class UserOpHandler implements IUserOpInterface {
             callGasLimit
         }
     }
-    async sendUserOperation(
-        userOp1: UserOperationStruct,
-        entryPointInput: string
-    ): Promise<string> {
+    async sendUserOperation(userOp1: UserOperationStruct, entryPointInput: string): Promise<string> {
         await this.validateParameters(userOp1, entryPointInput)
 
         const userOp = await resolveProperties(userOp1)
-        /*
-        console.log(
-            `UserOperation: Sender=${userOp.sender}  Nonce=${tostr(
-                userOp.nonce
-            )} EntryPoint=${entryPointInput} Paymaster=${getAddr(
-                userOp.paymasterAndData
-            )}`
-        )
-        */
         await this.execManager.sendUserOperation(userOp, entryPointInput)
         return await this.entryPoint.getUserOpHash(userOp)
-        throw new Error('Method not implemented.')
     }
-    async getOperationEvent(
-        userOpHash: string
-    ): Promise<UserOperationEventEvent> {
+    async getOperationEvent(userOpHash: string): Promise<UserOperationEventEvent> {
         // TODO: eth_getLogs is throttled. must be acceptable for finding a UserOperationStruct by hash
         const event = await this.entryPoint.queryFilter(
             this.entryPoint.filters.UserOperationEvent(userOpHash)
         )
         return event[0]
-        throw new Error('Method not implemented.')
     }
 
-    async getUserOperationByHash(
-        userOpHash: string
-    ): Promise<UserOperationByHashResponse> {
-        requireCond(
-            userOpHash?.toString()?.match(HEX_REGEX) != null,
-            'Missing/invalid userOpHash',
-            -32601
-        )
+    async getUserOperationByHash(userOpHash: string): Promise<UserOperationByHashResponse> {
+        requireCond(userOpHash?.toString()?.match(HEX_REGEX) != null, 'Missing/invalid userOpHash', -32601)
         const event = await this.getOperationEvent(userOpHash)
         if (event == null) {
             return null
@@ -193,9 +149,7 @@ export class UserOpHandler implements IUserOpInterface {
             throw new Error('failed to parse transaction')
         }
         const op = ops.find(
-            (op) =>
-                op.sender === event.args.sender &&
-                BigNumber.from(op.nonce).eq(event.args.nonce)
+            (op) => op.sender === event.args.sender && BigNumber.from(op.nonce).eq(event.args.nonce)
         )
         if (op == null) {
             throw new Error('unable to find userOp in transaction')
@@ -267,14 +221,8 @@ export class UserOpHandler implements IUserOpInterface {
         return logs.slice(startIndex + 1, endIndex)
     }
 
-    async getUserOperationReceipt(
-        userOpHash: string
-    ): Promise<UserOperationReceipt> {
-        requireCond(
-            userOpHash?.toString()?.match(HEX_REGEX) != null,
-            'Missing/invalid userOpHash',
-            -32601
-        )
+    async getUserOperationReceipt(userOpHash: string): Promise<UserOperationReceipt> {
+        requireCond(userOpHash?.toString()?.match(HEX_REGEX) != null, 'Missing/invalid userOpHash', -32601)
         const event = await this.getOperationEvent(userOpHash)
         if (event == null) {
             return null
@@ -291,6 +239,5 @@ export class UserOpHandler implements IUserOpInterface {
             logs,
             receipt
         })
-        throw new Error('Method not implemented.')
     }
 }
